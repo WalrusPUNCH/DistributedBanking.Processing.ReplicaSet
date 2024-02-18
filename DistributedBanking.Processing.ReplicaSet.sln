@@ -5,6 +5,10 @@ VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedBanking.Processing.ReplicaSet", "DistributedBanking.Processing.ReplicaSet\DistributedBanking.Processing.ReplicaSet.csproj", "{57E9FB90-5F55-4EF4-9FB8-ECD6245193B3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{A326143D-DD80-46DA-B110-565E609E1F04}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Contracts", "DistributedBanking.Shared\Contracts\Contracts.csproj", "{D8DA316E-64A0-4A74-81C3-10E199A9136C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,9 +19,16 @@ Global
 		{57E9FB90-5F55-4EF4-9FB8-ECD6245193B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57E9FB90-5F55-4EF4-9FB8-ECD6245193B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{57E9FB90-5F55-4EF4-9FB8-ECD6245193B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8DA316E-64A0-4A74-81C3-10E199A9136C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8DA316E-64A0-4A74-81C3-10E199A9136C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8DA316E-64A0-4A74-81C3-10E199A9136C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8DA316E-64A0-4A74-81C3-10E199A9136C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D8DA316E-64A0-4A74-81C3-10E199A9136C} = {A326143D-DD80-46DA-B110-565E609E1F04}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B6D4181C-9DC9-47C3-877F-56460E7D7C3F}
