@@ -4,6 +4,27 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="2.3.0" />
+    <PackageReference Include="Serilog.Enrichers.Thread" Version="3.1.0" />
+    <PackageReference Include="Serilog.Exceptions" Version="8.4.0" />
+    <PackageReference Include="AutoWrapper.Core" Version="4.5.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.15" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DistributedBanking.Processing.ReplicaSet.Domain\DistributedBanking.Processing.ReplicaSet.Domain.csproj" />
+    <ProjectReference Include="..\DistributedBanking.Shared\Contracts\Contracts.csproj" />
+    <ProjectReference Include="..\DistributedBanking.Shared\Shared.Kafka\Shared.Kafka.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DistributedBanking.Shared\Shared.Messaging\Shared.Messaging.csproj" />
+    <ProjectReference Include="..\DistributedBanking.Shared\Shared.Redis\Shared.Redis.csproj" />
+  </ItemGroup>
 
 </Project>

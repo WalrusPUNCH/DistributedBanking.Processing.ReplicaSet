@@ -3,11 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedBanking.Processing.ReplicaSet", "DistributedBanking.Processing.ReplicaSet\DistributedBanking.Processing.ReplicaSet.csproj", "{57E9FB90-5F55-4EF4-9FB8-ECD6245193B3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedBanking.Processing.ReplicaSet", "DistributedBanking.Processing.ReplicaSet\DistributedBanking.Processing.ReplicaSet.csproj", "{57E9FB90-5F55-4EF4-9FB8-ECD6245193B3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{A326143D-DD80-46DA-B110-565E609E1F04}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Contracts", "DistributedBanking.Shared\Contracts\Contracts.csproj", "{D8DA316E-64A0-4A74-81C3-10E199A9136C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Data", "DistributedBanking.Shared\Shared.Data\Shared.Data.csproj", "{CB4FBBE2-4BD7-488C-B513-2CAEFB853DAC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Kafka", "DistributedBanking.Shared\Shared.Kafka\Shared.Kafka.csproj", "{C50A4A72-94DA-4C48-8A58-4C4CC92AF484}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Messaging", "DistributedBanking.Shared\Shared.Messaging\Shared.Messaging.csproj", "{5B2280D5-6D1A-458C-AC71-F33E9BCC4C10}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Redis", "DistributedBanking.Shared\Shared.Redis\Shared.Redis.csproj", "{2409D13C-689D-425D-AC43-FDA5E77664CD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedBanking.Processing.ReplicaSet.Data", "DistributedBanking.Processing.ReplicaSet.Data\DistributedBanking.Processing.ReplicaSet.Data.csproj", "{B3E04F77-CFF0-4B32-9C84-D078096A54A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedBanking.Processing.ReplicaSet.Domain", "DistributedBanking.Processing.ReplicaSet.Domain\DistributedBanking.Processing.ReplicaSet.Domain.csproj", "{F5162731-9038-4039-835A-3929E5A42FED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,12 +35,40 @@ Global
 		{D8DA316E-64A0-4A74-81C3-10E199A9136C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8DA316E-64A0-4A74-81C3-10E199A9136C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8DA316E-64A0-4A74-81C3-10E199A9136C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CB4FBBE2-4BD7-488C-B513-2CAEFB853DAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB4FBBE2-4BD7-488C-B513-2CAEFB853DAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB4FBBE2-4BD7-488C-B513-2CAEFB853DAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB4FBBE2-4BD7-488C-B513-2CAEFB853DAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C50A4A72-94DA-4C48-8A58-4C4CC92AF484}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C50A4A72-94DA-4C48-8A58-4C4CC92AF484}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C50A4A72-94DA-4C48-8A58-4C4CC92AF484}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C50A4A72-94DA-4C48-8A58-4C4CC92AF484}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B2280D5-6D1A-458C-AC71-F33E9BCC4C10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B2280D5-6D1A-458C-AC71-F33E9BCC4C10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B2280D5-6D1A-458C-AC71-F33E9BCC4C10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B2280D5-6D1A-458C-AC71-F33E9BCC4C10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2409D13C-689D-425D-AC43-FDA5E77664CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2409D13C-689D-425D-AC43-FDA5E77664CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2409D13C-689D-425D-AC43-FDA5E77664CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2409D13C-689D-425D-AC43-FDA5E77664CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3E04F77-CFF0-4B32-9C84-D078096A54A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3E04F77-CFF0-4B32-9C84-D078096A54A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3E04F77-CFF0-4B32-9C84-D078096A54A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3E04F77-CFF0-4B32-9C84-D078096A54A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5162731-9038-4039-835A-3929E5A42FED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5162731-9038-4039-835A-3929E5A42FED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5162731-9038-4039-835A-3929E5A42FED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5162731-9038-4039-835A-3929E5A42FED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D8DA316E-64A0-4A74-81C3-10E199A9136C} = {A326143D-DD80-46DA-B110-565E609E1F04}
+		{CB4FBBE2-4BD7-488C-B513-2CAEFB853DAC} = {A326143D-DD80-46DA-B110-565E609E1F04}
+		{C50A4A72-94DA-4C48-8A58-4C4CC92AF484} = {A326143D-DD80-46DA-B110-565E609E1F04}
+		{5B2280D5-6D1A-458C-AC71-F33E9BCC4C10} = {A326143D-DD80-46DA-B110-565E609E1F04}
+		{2409D13C-689D-425D-AC43-FDA5E77664CD} = {A326143D-DD80-46DA-B110-565E609E1F04}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B6D4181C-9DC9-47C3-877F-56460E7D7C3F}
