@@ -30,49 +30,55 @@ public class UserManager : IUserManager
 
     public async Task<OperationResult> CreateAsync(string endUserId, EndUserRegistrationModel registrationModel, IEnumerable<string>? roles = null)
     {
-        try
+        using var session = await _usersRepository.StartSession();
+        return await session.WithTransactionAsync(async (_, _) =>
         {
-            var roleNames = roles?.ToList();
-            var roleIds = new List<string>();
-            if (roleNames != null && roleNames.Any())
+            try
             {
-                foreach (var roleName in roleNames)
+                var roleNames = roles?.ToList();
+                var roleIds = new List<string>();
+                if (roleNames != null && roleNames.Any())
                 {
-                    var roleId = (await _rolesRepository.GetAsync(r => r.NormalizedName == roleName.NormalizeString())).FirstOrDefault()?.Id;
-                    if (roleId != null)
+                    foreach (var roleName in roleNames)
                     {
-                        roleIds.Add(roleId.Value.ToString()!);
+                        var roleId =
+                            (await _rolesRepository.GetAsync(r => r.NormalizedName == roleName.NormalizeString()))
+                            .FirstOrDefault()?.Id;
+                        if (roleId != null)
+                        {
+                            roleIds.Add(roleId.Value.ToString()!);
+                        }
                     }
                 }
-            }
 
-            var existingUser = await _usersRepository.GetByEmailAsync(registrationModel.Email);
-            if (existingUser != null)
-            {
-                return OperationResult.BadRequest("User with the same email already exists");
-            }
-            
-            var user = new ApplicationUser
-            {
-                Email = registrationModel.Email,
-                NormalizedEmail = registrationModel.Email.NormalizeString(),
-                PhoneNumber = registrationModel.PhoneNumber,
-                PasswordHash = registrationModel.PasswordHash,
-                PasswordSalt = registrationModel.Salt,
-                CreatedOn = DateTime.UtcNow,
-                Roles = roleIds,
-                EndUserId = endUserId
-            };
+                var existingUser = await _usersRepository.GetByEmailAsync(registrationModel.Email);
+                if (existingUser != null)
+                {
+                    return OperationResult.BadRequest("User with the same email already exists");
+                }
 
-            await _usersRepository.AddAsync(user);
-            
-            return OperationResult.Success();
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Exception occurred while trying to create new user");
-            return OperationResult.InternalFail("Error occurred while trying to create new user");
-        }
+                var user = new ApplicationUser
+                {
+                    Email = registrationModel.Email,
+                    NormalizedEmail = registrationModel.Email.NormalizeString(),
+                    PhoneNumber = registrationModel.PhoneNumber,
+                    PasswordHash = registrationModel.PasswordHash,
+                    PasswordSalt = registrationModel.Salt,
+                    CreatedOn = DateTime.UtcNow,
+                    Roles = roleIds,
+                    EndUserId = endUserId
+                };
+
+                await _usersRepository.AddAsync(user);
+
+                return OperationResult.Success();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Exception occurred while trying to create new user");
+                return OperationResult.InternalFail("Error occurred while trying to create new user");
+            }
+        });
     }
 
     public async Task<UserModel?> GetByEmailAsync(string email)
@@ -165,16 +171,20 @@ public class UserManager : IUserManager
 
     public async Task<OperationResult> DeleteAsync(ObjectId userId)
     {
-        try
+        using var session = await _usersRepository.StartSession();
+        return await session.WithTransactionAsync(async (_, _) =>
         {
-            await _usersRepository.RemoveAsync(userId);
+            try
+            {
+                await _usersRepository.RemoveAsync(userId);
 
-            return OperationResult.Success();
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Exception occurred while trying to sign in user");
-            return OperationResult.InternalFail("Error occurred while trying to sign in user");
-        }
+                return OperationResult.Success();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Exception occurred while trying to sign in user");
+                return OperationResult.InternalFail("Error occurred while trying to sign in user");
+            }
+        });
     }
 }

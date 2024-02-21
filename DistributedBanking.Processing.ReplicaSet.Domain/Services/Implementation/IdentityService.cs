@@ -34,110 +34,127 @@ public class IdentityService : IIdentityService
     public async Task<OperationResult> RegisterUser(
         EndUserRegistrationModel registrationModel, string role)
     {
-        return await RegisterUserInternal(registrationModel, role);
+        using var session = await _customersRepository.StartSession();
+        return await session.WithTransactionAsync(async (_, _) => await RegisterUserInternal(registrationModel, role));
     }
     
     private async Task<OperationResult> RegisterUserInternal(EndUserRegistrationModel registrationModel, string role)
     {
-        var existingUser = await _usersManager.GetByEmailAsync(registrationModel.Email);
-        if (existingUser != null)
+        using var session = await _customersRepository.StartSession();
+        return await session.WithTransactionAsync(async (_, _) =>
         {
-            return OperationResult.BadRequest("User with the same email already exists");
-        }
-        
-        ObjectId endUserId;
-        if (string.Equals(role, RoleNames.Customer, StringComparison.InvariantCultureIgnoreCase))
-        {
-            var customerEntity = registrationModel.Adapt<CustomerEntity>();
-            await _customersRepository.AddAsync(customerEntity);
+            var existingUser = await _usersManager.GetByEmailAsync(registrationModel.Email);
+            if (existingUser != null)
+            {
+                return OperationResult.BadRequest("User with the same email already exists");
+            }
 
-            endUserId = customerEntity.Id;
-        }
-        else if (string.Equals(role, RoleNames.Worker, StringComparison.InvariantCultureIgnoreCase))
-        {
-            var workerEntity = registrationModel.Adapt<WorkerEntity>();
-            await _workersRepository.AddAsync(workerEntity);
-            
-            endUserId = workerEntity.Id;
-        }
-        else if (string.Equals(role, RoleNames.Administrator, StringComparison.InvariantCultureIgnoreCase))
-        {
-            var workerEntity = registrationModel.Adapt<WorkerEntity>();
-            await _workersRepository.AddAsync(workerEntity);
-            
-            endUserId = workerEntity.Id;
-        }
-        else
-        {
-            throw new ArgumentOutOfRangeException(nameof(role), role, "Specified role is not supported");
-        }
-        
-        var userCreationResult = await _usersManager.CreateAsync(endUserId.ToString()!, registrationModel, new []{ role });
-        if (userCreationResult.Status != OperationStatus.Success)
-        {
+            ObjectId endUserId;
+            if (string.Equals(role, RoleNames.Customer, StringComparison.InvariantCultureIgnoreCase))
+            {
+                var customerEntity = registrationModel.Adapt<CustomerEntity>();
+                await _customersRepository.AddAsync(customerEntity);
+
+                endUserId = customerEntity.Id;
+            }
+            else if (string.Equals(role, RoleNames.Worker, StringComparison.InvariantCultureIgnoreCase))
+            {
+                var workerEntity = registrationModel.Adapt<WorkerEntity>();
+                await _workersRepository.AddAsync(workerEntity);
+
+                endUserId = workerEntity.Id;
+            }
+            else if (string.Equals(role, RoleNames.Administrator, StringComparison.InvariantCultureIgnoreCase))
+            {
+                var workerEntity = registrationModel.Adapt<WorkerEntity>();
+                await _workersRepository.AddAsync(workerEntity);
+
+                endUserId = workerEntity.Id;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(role), role, "Specified role is not supported");
+            }
+
+            var userCreationResult =
+                await _usersManager.CreateAsync(endUserId.ToString()!, registrationModel, new[] { role });
+            if (userCreationResult.Status != OperationStatus.Success)
+            {
+                return userCreationResult;
+            }
+
+            _logger.LogInformation("New user '{Email}' has been registered and assigned a '{Role}' role",
+                registrationModel.Email, role);
+
             return userCreationResult;
-        }
-        
-        _logger.LogInformation("New user '{Email}' has been registered and assigned a '{Role}' role",
-            registrationModel.Email, role);
-            
-        return userCreationResult;
+        });
     }
     
     public async Task<OperationResult> DeleteUser(string id)
     {
-        var appUser = await _usersManager.GetByIdAsync(id);
-        if (appUser == null)
+        using var session = await _customersRepository.StartSession();
+        return await session.WithTransactionAsync(async (_, _) =>
         {
-            return OperationResult.BadRequest("Specified user does not exist");
-        }
+            var appUser = await _usersManager.GetByIdAsync(id);
+            if (appUser == null)
+            {
+                return OperationResult.BadRequest("Specified user does not exist");
+            }
 
-        if (await _usersManager.IsInRoleAsync(appUser.Id, RoleNames.Customer))
-        {
-            var customer = await _customersRepository.GetAsync(new ObjectId(appUser.EndUserId));
-            if (customer == null)
+            if (await _usersManager.IsInRoleAsync(appUser.Id, RoleNames.Customer))
             {
-                _logger.LogError("Customer with the end ID {Id} specified in service user does not exist", appUser.EndUserId);
-                return OperationResult.InternalFail("Error occured while trying to delete user. Try again later");
+                var customer = await _customersRepository.GetAsync(new ObjectId(appUser.EndUserId));
+                if (customer == null)
+                {
+                    _logger.LogError("Customer with the end ID {Id} specified in service user does not exist",
+                        appUser.EndUserId);
+                    return OperationResult.InternalFail("Error occured while trying to delete user. Try again later");
+                }
+
+                foreach (var customerAccountId in customer.Accounts)
+                {
+                    await _accountService.DeleteAsync(customerAccountId);
+                }
+
+                await _customersRepository.RemoveAsync(new ObjectId(appUser.EndUserId));
             }
-            foreach (var customerAccountId in customer.Accounts)
+            else
             {
-                await _accountService.DeleteAsync(customerAccountId);
+                await _workersRepository.RemoveAsync(new ObjectId(appUser.EndUserId));
             }
-                
-            await _customersRepository.RemoveAsync(new ObjectId(appUser.EndUserId));
-        }
-        else
-        {
-            await _workersRepository.RemoveAsync(new ObjectId(appUser.EndUserId));
-        }
-            
-        await _usersManager.DeleteAsync(appUser.Id);
-        
-        return OperationResult.Success();
+
+            await _usersManager.DeleteAsync(appUser.Id);
+
+            return OperationResult.Success();
+        });
     }
 
     public async Task<OperationResult> UpdateCustomerPersonalInformation(string customerId, CustomerPassportModel customerPassport)
     {
-        try
+        using var session = await _customersRepository.StartSession();
+        return await session.WithTransactionAsync(async (_, _) =>
         {
-            var customer = await _customersRepository.GetAsync(new ObjectId(customerId));
-            if (customer == null)
+            try
             {
-                _logger.LogWarning("Customer with id {Id} does not exist", customerId);
-                return OperationResult.BadRequest("Customer with the specified ID does not exist");
-            }
+                var customer = await _customersRepository.GetAsync(new ObjectId(customerId));
+                if (customer == null)
+                {
+                    _logger.LogWarning("Customer with id {Id} does not exist", customerId);
+                    return OperationResult.BadRequest("Customer with the specified ID does not exist");
+                }
 
-            customer.Passport = customerPassport.Adapt<CustomerPassport>();
-            await _customersRepository.UpdateAsync(customer);
-            
-            return OperationResult.Success();
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Error occurred while trying to update personal information for customer with ID {Id}",
-                customerId);
-            throw;
-        }
+                customer.Passport = customerPassport.Adapt<CustomerPassport>();
+                await _customersRepository.UpdateAsync(customer);
+
+                return OperationResult.Success();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception,
+                    "Error occurred while trying to update personal information for customer with ID {Id}",
+                    customerId);
+                throw;
+            }
+        });
     }
 }

@@ -21,22 +21,26 @@ public class RolesManager : IRolesManager
     
     public async Task<OperationResult> CreateAsync(ApplicationRole role)
     {
-        try
+        using var session = await _rolesRepository.StartSession();
+        return await session.WithTransactionAsync(async (_, _) =>
         {
-            if (await RoleExists(role.NormalizedName))
+            try
             {
-                return OperationResult.BadRequest("Role with the same name already exists");
-            }
+                if (await RoleExists(role.NormalizedName))
+                {
+                    return OperationResult.BadRequest("Role with the same name already exists");
+                }
 
-            await _rolesRepository.AddAsync(role);
-            return OperationResult.Success();
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Exception occurred while trying to create a new role");
-            
-            return OperationResult.InternalFail("Error occurred while trying to create a new role");
-        }
+                await _rolesRepository.AddAsync(role);
+                return OperationResult.Success();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Exception occurred while trying to create a new role");
+
+                return OperationResult.InternalFail("Error occurred while trying to create a new role");
+            }
+        });
     }
 
     public async Task<bool> RoleExists(string roleName)

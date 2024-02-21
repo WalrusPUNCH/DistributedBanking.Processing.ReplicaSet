@@ -26,23 +26,28 @@ public class AccountService : IAccountService
     
     public async Task<OperationResult<AccountOwnedResponseModel>> CreateAsync(string customerId, AccountCreationModel accountCreationModel)
     {
-        var customerEntity = await _customersRepository.GetAsync(new ObjectId(customerId));
-        if (customerEntity == null)
+        using var session = await _accountsRepository.StartSession();
+        return await session.WithTransactionAsync(async (_, _) =>
         {
-            _logger.LogError("Customer with the ID '{CustomerId}' does not exist", customerId);
-            return OperationResult<AccountOwnedResponseModel>.BadRequest(default, "Error occured while trying to create account. Try again later");
-        }
-        
-        var account = GenerateNewAccount(customerId, accountCreationModel);
-        var accountEntity = account.Adapt<AccountEntity>();
-        await _accountsRepository.AddAsync(accountEntity);
-        
-        customerEntity.Accounts.Add(accountEntity.Id.ToString());
-        await _customersRepository.UpdateAsync(customerEntity);
-        
-        var accountModel = accountEntity.Adapt<AccountOwnedResponseModel>();
+            var customerEntity = await _customersRepository.GetAsync(new ObjectId(customerId));
+            if (customerEntity == null)
+            {
+                _logger.LogError("Customer with the ID '{CustomerId}' does not exist", customerId);
+                return OperationResult<AccountOwnedResponseModel>.BadRequest(default,
+                    "Error occured while trying to create account. Try again later");
+            }
 
-        return OperationResult<AccountOwnedResponseModel>.Success(accountModel);
+            var account = GenerateNewAccount(customerId, accountCreationModel);
+            var accountEntity = account.Adapt<AccountEntity>();
+            await _accountsRepository.AddAsync(accountEntity);
+
+            customerEntity.Accounts.Add(accountEntity.Id.ToString());
+            await _customersRepository.UpdateAsync(customerEntity);
+
+            var accountModel = accountEntity.Adapt<AccountOwnedResponseModel>();
+
+            return OperationResult<AccountOwnedResponseModel>.Success(accountModel);
+        });
     }
 
     private static AccountModel GenerateNewAccount(string customerId, AccountCreationModel accountModel)
@@ -90,39 +95,52 @@ public class AccountService : IAccountService
 
     public async Task UpdateAsync(AccountEntity model)
     {
-        await _accountsRepository.UpdateAsync(model);
+        using var session = await _accountsRepository.StartSession();
+        await session.WithTransactionAsync(async (_, _) =>
+        {
+            await _accountsRepository.UpdateAsync(model);
+            return model;
+        });
     }
 
     public async Task<OperationResult> DeleteAsync(string id)
     {
-        try
+        using var session = await _accountsRepository.StartSession();
+        return await session.WithTransactionAsync(async (_, _) =>
         {
-            var accountEntity = await _accountsRepository.GetAsync(new ObjectId(id));
-            if (string.IsNullOrWhiteSpace(accountEntity?.Owner))
+            try
             {
-                _logger.LogWarning("Unable to delete account '{AccountId}' because such account does not exist or already deleted", id);
-                return OperationResult.BadRequest("Account with the specified ID doesn't exist");
+                var accountEntity = await _accountsRepository.GetAsync(new ObjectId(id));
+                if (string.IsNullOrWhiteSpace(accountEntity?.Owner))
+                {
+                    _logger.LogWarning(
+                        "Unable to delete account '{AccountId}' because such account does not exist or already deleted",
+                        id);
+                    return OperationResult.BadRequest("Account with the specified ID doesn't exist");
+                }
+
+                var customerEntity = await _customersRepository.GetAsync(new ObjectId(accountEntity.Owner));
+                if (customerEntity == null)
+                {
+                    _logger.LogError(
+                        "Customer with the ID '{CustomerId}' connected to the account '{AccountId}' does not exist",
+                        accountEntity.Owner, id);
+                    return OperationResult.InternalFail(
+                        "Error occured while trying to delete account. Try again later");
+                }
+
+                customerEntity.Accounts.Remove(accountEntity.Id.ToString());
+                await _customersRepository.UpdateAsync(customerEntity);
+                accountEntity.Owner = null;
+                await UpdateAsync(accountEntity);
+
+                return OperationResult.Success();
             }
-        
-            var customerEntity = await _customersRepository.GetAsync(new ObjectId(accountEntity.Owner));
-            if (customerEntity == null)
+            catch (Exception exception)
             {
-                _logger.LogError("Customer with the ID '{CustomerId}' connected to the account '{AccountId}' does not exist", 
-                    accountEntity.Owner, id);
-                return OperationResult.InternalFail("Error occured while trying to delete account. Try again later");
+                _logger.LogError(exception, "Exception occurred while trying to delete account");
+                return OperationResult.InternalFail("Error occurred while trying to delete account. Try again later");
             }
-            
-            customerEntity.Accounts.Remove(accountEntity.Id.ToString());
-            await _customersRepository.UpdateAsync(customerEntity);
-            accountEntity.Owner = null;
-            await UpdateAsync(accountEntity);
-            
-            return OperationResult.Success();
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Exception occurred while trying to delete account");
-            return OperationResult.InternalFail("Error occurred while trying to delete account. Try again later");
-        }
+        });
     }
 }
