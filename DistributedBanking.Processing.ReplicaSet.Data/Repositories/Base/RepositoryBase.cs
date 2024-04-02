@@ -1,12 +1,13 @@
-﻿using System.Linq.Expressions;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using Shared.Data.Entities;
+using System.Linq.Expressions;
 
 namespace DistributedBanking.Processing.ReplicaSet.Data.Repositories.Base;
 
 public class RepositoryBase<T> : IRepositoryBase<T> where T : BaseEntity
 {
+    private readonly IMongoDatabase _database;
     protected readonly IMongoCollection<T> Collection;
     private readonly FilterDefinitionBuilder<T> _filterBuilder = Builders<T>.Filter;
     
@@ -14,6 +15,7 @@ public class RepositoryBase<T> : IRepositoryBase<T> where T : BaseEntity
         IMongoDatabase database,
         string collectionName)
     {
+        _database = database;
         if (!database.ListCollectionNames().ToList().Contains(collectionName))
         {
             database.CreateCollection(collectionName);
@@ -22,6 +24,11 @@ public class RepositoryBase<T> : IRepositoryBase<T> where T : BaseEntity
         Collection = database.GetCollection<T>(collectionName);
     }
 
+    public async Task<IClientSessionHandle> StartSession()
+    {
+        return await _database.Client.StartSessionAsync();
+    }
+    
     public virtual async Task<IReadOnlyCollection<T>> GetAllAsync()
     {
         return await Collection.Find(FilterDefinition<T>.Empty).ToListAsync();
